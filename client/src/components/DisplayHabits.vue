@@ -1,6 +1,6 @@
 <template>
   <div class="column full-height  text-grey-1 ">
-    <div class="q-pa-md ">
+    <div class="q-pa-md col-2">
       <div class="text-h4 text-grey-3">
         Habits
       </div>
