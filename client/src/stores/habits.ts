@@ -64,14 +64,6 @@ export const useHabitStore = defineStore('habits', {
     addHabit(habit:Habit) {
       habit.id = nanoid();
       this.habits.push(habit);
-
-      const today = new Date();
-      const format = today.toLocaleDateString();
-
-      if (this.history.data[format]
-       && habit.schedule.includes(weekdaysNumber[today.getDay()])) {
-        this.history.data[format].todos[habit.id] = { name: habit.name, completed: false };
-      }
     },
     checkHabit(val:boolean, ID:string) {
       // const today = new Date();
@@ -98,8 +90,14 @@ export const useHabitStore = defineStore('habits', {
         this.history.data[today] = record;
       }
       record = this.history.data[today];
+      record.todos[ID].name = this.todayHabits[index].name;
       record.todos[ID].completed = val;
       this.history.data[today] = record;
+    },
+    deleteHabit(id:string) {
+      const index = this.habits.findIndex((habit) => habit.id === id);
+      if (index === -1) { return; }
+      this.habits.splice(index, 1);
     },
   },
 });
