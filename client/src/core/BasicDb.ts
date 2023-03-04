@@ -21,7 +21,7 @@ export class BasicDb<T extends doc> implements db<T> {
 
   add(obj: T): void {
     if (this.db[obj.id]) {
-      throw new Error('Id already exists');
+      return;
     }
     this.db[obj.id] = obj;
   }
