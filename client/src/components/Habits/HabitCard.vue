@@ -3,7 +3,7 @@
     class="q-pa-sm column border-radius-10px justify-between"
     style="height:140px"
     :style="habit.style"
-    :class="[todayHistory[habit.id].completed?'completed':'']"
+    :class="[completed?'completed':'']"
     tag="label"
   >
     <div class="full-width">
@@ -17,7 +17,7 @@
     <div>
       <div class="row justify-end">
         <q-checkbox
-          v-model="todayHistory[habit.id].completed"
+          v-model="completed"
           dense
           keep-color
           size="lg"
@@ -29,9 +29,9 @@
   </q-card>
 </template>
 <script lang="ts">
-import { Habit } from 'src/models/habit';
+import { Habit } from 'src/models/Habit';
 import { defineComponent, PropType } from 'vue';
-import { useHabitStore } from '../stores/habits';
+import { useHabitStore } from '../../stores/habits';
 
 export default defineComponent({
   name: 'HabitCard',
@@ -48,9 +48,20 @@ export default defineComponent({
       todayHistory, habitStore,
     };
   },
+  computed: {
+    completed: {
+      get() {
+        return this.todayHistory.completed[this.habit.id]?.completed ?? false;
+      },
+      set(val:boolean) {
+        this.check(val);
+      },
+
+    },
+  },
   methods: {
     check(val:boolean) {
-      this.habitStore.checkHabit(val, this.habit.id);
+      this.habitStore.checkHabit(this.habit.id, val);
     },
   },
 });

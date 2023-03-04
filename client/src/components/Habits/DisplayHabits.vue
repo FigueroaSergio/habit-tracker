@@ -1,5 +1,5 @@
 <template>
-  <div class="column full-height  text-grey-1 ">
+  <div class="column full-height text-grey-1">
     <div class="q-pa-md col-2">
       <div class="text-h4 text-grey-3">
         Habits
@@ -10,11 +10,9 @@
     </div>
     <div class="col-10">
       <q-scroll-area class="fit">
-        <q-list
-          class="q-pa-xs col-12 text-h6"
-        >
+        <q-list class="q-pa-xs col-12 text-h6">
           <q-item
-            v-for="habit in habitStore.habits"
+            v-for="habit in habitStore.getHabits"
             :key="habit.id"
             clickable
           >
@@ -26,14 +24,13 @@
             </q-item-section>
             <q-item-section>
               <q-item-label>{{ habit.name }}</q-item-label>
-              <q-item-label
-                caption
-              >
+              <q-item-label caption>
                 <span
-                  v-for="day,i in habit.schedule"
+                  v-for="(day, i) in habit.schedule.weekDays"
                   :key="day"
                   class="text-grey-5"
-                >{{ day }}{{ i+1===habit.schedule.length?'':',' }}</span>
+                >{{ day
+                }}{{ i + 1 === habit.schedule.weekDays.length ? "" : "," }}</span>
               </q-item-label>
             </q-item-section>
             <q-item-section side>
@@ -59,7 +56,7 @@ import { defineComponent } from 'vue';
 
 export default defineComponent({
   name: 'DisplayHabits',
-  components: { },
+  components: {},
   data() {
     const habitStore = useHabitStore();
     return {
@@ -67,7 +64,7 @@ export default defineComponent({
     };
   },
   methods: {
-    deleteHabit(id:string) {
+    deleteHabit(id: string) {
       this.habitStore.deleteHabit(id);
     },
   },

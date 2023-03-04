@@ -1,103 +1,97 @@
-import { nanoid } from 'nanoid';
 import { defineStore } from 'pinia';
-import { Habit, weekdaysNumber } from 'src/models/habit';
+import { Habit } from 'src/models/Habit';
+import { date } from 'quasar';
 import { Statistic } from 'src/models/statistic';
 import { decompress } from 'lz-string';
 import { plainToClass } from 'class-transformer';
-import { Record, History } from 'src/models/dayRecord';
+import { Record } from 'src/models/Record';
+import { BasicDb } from 'src/core/BasicDb';
+import { Schedule } from 'src/models/Schedule';
 
-const version = 'v1';
-export const useHabitStore = defineStore('habits', {
+const VERSION = 'V1';
+const NAME = `HABITS-${VERSION}`;
+const FORMAT = 'MM/DD/YYYY';
+export const useHabitStore = defineStore(NAME, {
   state: () => {
-    let habits:Habit[] = [];
-    let statistics:Statistic = new Statistic();
-    let history:History = new History();
-
-    const text = localStorage.getItem('habits');
-
-    if (!text) {
-      return {
-        habits, statistics, history, version,
-      };
-    }
-
-    const data = decompress(text);
-    const js = JSON.parse(data ?? '{}');
-
-    if (js.habits) {
-      const r = plainToClass(Habit, js.habits);
-      if (Array.isArray(r)) { habits = r; }
-    }
-    if (js.statistics) {
-      statistics = plainToClass(Statistic, js.statistics);
-    }
-    if (js.history) {
-      history = plainToClass(History, js.history);
-    }
-
+    const habits = new BasicDb<Habit>();
+    const statistics: Statistic = new Statistic();
+    const history = new BasicDb<Record>();
     return {
-      habits, statistics, history, version,
+      habits, statistics, history, VERSION,
     };
   },
 
   getters: {
     todayHistory(state) {
-      const today = new Date().toLocaleDateString();
-      if (!state.history.data[today]) {
-        const record: Record = new Record();
-        this.todayHabits.forEach(({ id, name }) => {
-          record.todos[id] = { name, completed: false };
-        });
-        return record.todos;
+      const today = date.formatDate(new Date(), FORMAT);
+      if (!state.history.exist(today)) {
+        return new Record();
       }
-      return state.history.data[today].todos;
+      return state.history.get(today);
     },
     todayHabits(state) {
-      const today = new Date();
-      const numDay = today.getDay();
-      const val = weekdaysNumber[numDay];
-
-      return state.habits.filter((habit) => habit.schedule.includes(val));
+      return state.habits.getAll().filter((habit) => habit.schedule.isAvalibleToday());
+    },
+    getHabits(state) {
+      return state.habits.getAll();
     },
   },
   actions: {
-    addHabit(habit:Habit) {
-      habit.id = nanoid();
-      this.habits.push(habit);
-    },
-    checkHabit(val:boolean, ID:string) {
-      // const today = new Date();
-      const index = this.todayHabits.findIndex((habit) => habit.id === ID);
-      if (index === -1) {
+    getData() {
+      const text = localStorage.getItem(NAME);
+
+      if (!text) {
         return;
       }
-      const today = new Date().toLocaleDateString();
-      const value = val ? 1 : -1;
 
-      this.todayHabits[index].completed += value;
-      this.statistics.total += value;
+      const data = decompress(text);
+      const js = JSON.parse(data ?? '{}');
 
-      let record: Record = new Record();
-
-      // initialize values to false
-      if (!this.history.data[today]) {
-        this.todayHabits.forEach((({ id, name }) => {
-          record.todos[id] = {
-            name,
-            completed: false,
-          };
-        }));
-        this.history.data[today] = record;
+      if (js.habits) {
+        const { db } = plainToClass(BasicDb, js.habits);
+        Object.values(db).forEach((val) => {
+          const habit = plainToClass(Habit, val);
+          if (habit) {
+            const schedule = plainToClass(Schedule, habit.schedule);
+            habit.schedule = schedule;
+            this.habits.add(Object.assign(new Habit(), habit));
+          }
+        });
       }
-      record = this.history.data[today];
-      record.todos[ID].name = this.todayHabits[index].name;
-      record.todos[ID].completed = val;
-      this.history.data[today] = record;
+      if (js.statistics) {
+        const statistics = plainToClass(Statistic, js.statistics);
+        this.statistics = statistics;
+      }
+      if (js.history) {
+        const { db } = plainToClass(BasicDb, js.history);
+        Object.values(db).forEach((val) => {
+          const record = plainToClass(Record, val);
+          if (record) {
+            this.history.add(record);
+          }
+        });
+      }
     },
-    deleteHabit(id:string) {
-      const index = this.habits.findIndex((habit) => habit.id === id);
-      if (index === -1) { return; }
-      this.habits.splice(index, 1);
+    addHabit(habit: Habit) {
+      this.habits.add(habit);
+      this.checkHabit(habit.id, false);
+    },
+    checkHabit(id: string, val: boolean) {
+      const today = date.formatDate(new Date(), FORMAT);
+      if (!this.history.exist(today)) {
+        this.history.add(new Record());
+      }
+
+      const habit = this.habits.get(id);
+      this.history.get(today).add(habit, val);
+    },
+    deleteHabit(id: string) {
+      this.habits.delete(id);
+    },
+    reset() {
+      this.habits = new BasicDb<Habit>();
+      this.history = new BasicDb<Record>();
+      this.statistics = new Statistic();
     },
   },
 });

@@ -1,42 +1,22 @@
-export enum weekday {
-  Sunday = 'Su',
-  Monday = 'Mo',
-  Tuesday = 'Tu',
-  Wednesday = 'We',
-  Thursday = 'Th',
-  Friday = 'Fr',
-  Saturday = 'Sa',
-}
-type week={
-  [key:number]:weekday
-}
-export const weekdaysNumber:week = {
-  0: weekday.Sunday,
-  1: weekday.Monday,
-  2: weekday.Tuesday,
-  3: weekday.Wednesday,
-  4: weekday.Thursday,
-  5: weekday.Friday,
-  6: weekday.Saturday,
-};
+import { doc } from 'src/core/db';
+import { nanoid } from 'nanoid';
+import { Schedule } from './Schedule';
 
-export class Habit {
-  id = '';
+export class Habit implements doc {
+  id = nanoid();
 
   name = '';
 
   description?:string|null = '';
 
-  completed = 0;
-
-  schedule: Array<weekday> = [];
+  style?: string | null = 'background: linear-gradient(45deg, rgb(255, 0, 132), rgb(255, 174, 0));';
 
   createAt: Date = new Date();
 
-  style?: string | null = 'background: linear-gradient(45deg, rgb(255, 0, 132), rgb(255, 174, 0));';
+  lastUpdate = new Date();
 
-  updateAt?: Date | null = null;
+  deleteAt: Date | null = null;
 
-  deleteAt?: Date | null = null;
+  schedule = new Schedule();
 }
-export type habitPreview = Pick<Habit, 'name'> &{completed:boolean}
+export type habitPreview =Habit&{completed:boolean}

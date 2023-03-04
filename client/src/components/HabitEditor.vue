@@ -50,7 +50,7 @@
       Repeat
     </div>
     <q-field
-      v-model="habitProxy.schedule"
+      v-model="habitProxy.schedule.weekDays"
       :rules="[(val:string[])=>val.length>0||'Select at least one weekday']"
       borderless
       dense
@@ -61,13 +61,13 @@
           :key="day"
           tag="label"
           class="border-radius-10px bg-dark-gradient "
-          :active="habitProxy.schedule.includes(day)"
+          :active="habitProxy.schedule.weekDays.includes(day)"
           active-class=" bg-green-gradient text-white"
           style="width: 48px;"
         >
           <q-item-section>
             <q-checkbox
-              v-model="habitProxy.schedule"
+              v-model="habitProxy.schedule.weekDays"
               style="display:none"
               :val="day"
             />
@@ -93,10 +93,10 @@
 import {
   defineComponent, PropType, ref,
 } from 'vue';
-import { Habit, weekday } from 'src/models/habit';
-import { plainToClass } from 'class-transformer';
+import { Habit } from 'src/models/Habit';
 import RainbowSlider from 'src/components/RainbowSlider.vue';
 import { QForm } from 'quasar';
+import { weekday } from 'src/models/Schedule';
 import { useHabitStore } from '../stores/habits';
 
 export default defineComponent({
@@ -121,25 +121,15 @@ export default defineComponent({
       color: 5,
     };
   },
-  watch: {
-    habit: {
-      immediate: true,
-      handler(val) {
-        this.habitProxy = plainToClass(Habit, val);
-      },
-    },
-  },
   methods: {
     newBg(val:string) {
       this.habitProxy.style = val;
     },
     save() {
-      this.habitStore.addHabit(this.habitProxy);
+      this.habitStore.addHabit({ ...this.habitProxy });
       this.habitProxy = new Habit();
       this.color = 5;
-      setTimeout(() => {
-        if (this.creatorHabit) this.creatorHabit.resetValidation();
-      }, 20);
+      if (this.creatorHabit) this.creatorHabit.reset();
     },
   },
 });
